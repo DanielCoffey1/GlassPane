@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "riLfwnTkpmdfyqtMODE/dMoh5rFLi8nCbZySvqeZIFN/ulVAmZK8GocnyJina2KXNQLDBfovcqjzDxjsQ32l4Q==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Daniel\\Documents\\GitHub\\GlassPane\\GlassPane.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Daniel\\.nuget\\packages\\microsoft.win32.systemevents\\6.0.0\\microsoft.win32.systemevents.6.0.0.nupkg.sha512",
+    "C:\\Users\\Daniel\\.nuget\\packages\\microsoft.windows.sdk.buildtools\\10.0.22621.2428\\microsoft.windows.sdk.buildtools.10.0.22621.2428.nupkg.sha512",
+    "C:\\Users\\Daniel\\.nuget\\packages\\system.drawing.common\\6.0.0\\system.drawing.common.6.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}
