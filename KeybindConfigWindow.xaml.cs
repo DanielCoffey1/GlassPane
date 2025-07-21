@@ -131,9 +131,24 @@ namespace GlassPane
             if (sender is Button button && button.Tag is KeybindButtonTag tag)
             {
                 currentlyCapturingButton = button;
-                button.Content = "Press keys...";
-                button.Background = System.Windows.Media.Brushes.LightYellow;
+                SetButtonCapturingState(button, true);
                 button.Focus();
+            }
+        }
+
+        private void SetButtonCapturingState(Button button, bool isCapturing)
+        {
+            if (button != null)
+            {
+                if (isCapturing)
+                {
+                    button.Content = "Press keys...";
+                    button.Background = System.Windows.Media.Brushes.LightYellow;
+                }
+                else
+                {
+                    button.Style = (Style)FindResource("KeybindButton");
+                }
             }
         }
 
@@ -180,7 +195,7 @@ namespace GlassPane
 
                 // Update button
                 currentlyCapturingButton.Content = keybindInfo.ToString();
-                currentlyCapturingButton.Style = (Style)FindResource("KeybindButton");
+                SetButtonCapturingState(currentlyCapturingButton, false);
                 currentlyCapturingButton = null;
             }
         }
@@ -282,13 +297,9 @@ namespace GlassPane
 
         private void BtnResetDefaults_Click(object sender, RoutedEventArgs e)
         {
-            var result = MessageBox.Show(
+            if (UIHelper.ShowConfirmation(
                 "Are you sure you want to reset all keybinds to their default values?",
-                "Reset to Defaults",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
+                "Reset to Defaults"))
             {
                 currentConfig = new KeybindConfiguration();
                 PopulateKeybinds();
@@ -300,21 +311,13 @@ namespace GlassPane
             try
             {
                 ConfigurationService.Instance.SaveConfiguration(currentConfig);
-                MessageBox.Show(
-                    "Keybind configuration saved successfully!",
-                    "Success",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                UIHelper.ShowInfo("Keybind configuration saved successfully!", "Success");
                 DialogResult = true;
                 Close();
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"Failed to save configuration: {ex.Message}",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                UIHelper.ShowError($"Failed to save configuration: {ex.Message}");
             }
         }
 
@@ -328,8 +331,7 @@ namespace GlassPane
         {
             if (currentlyCapturingButton != null)
             {
-                currentlyCapturingButton.Content = "Press keys...";
-                currentlyCapturingButton.Style = (Style)FindResource("KeybindButton");
+                SetButtonCapturingState(currentlyCapturingButton, false);
                 currentlyCapturingButton = null;
             }
             base.OnClosing(e);

@@ -112,11 +112,11 @@ namespace GlassPane.Services
             try
             {
                 desktopManager.AssignWindowToDesktop(desktopNumber);
-                ShowNotification($"Assigned window to Desktop {desktopNumber}");
+                ErrorHandler.ShowNotification($"Assigned window to Desktop {desktopNumber}");
             }
             catch (Exception ex)
             {
-                ShowNotification($"Failed to assign window: {ex.Message}");
+                ErrorHandler.ShowNotification($"Failed to assign window: {ex.Message}", true);
             }
         }
 
@@ -128,15 +128,8 @@ namespace GlassPane.Services
             }
             catch (Exception ex)
             {
-                ShowNotification($"Failed to switch to desktop: {ex.Message}");
+                ErrorHandler.ShowNotification($"Failed to switch to desktop: {ex.Message}", true);
             }
-        }
-
-        private void ShowNotification(string message)
-        {
-            // In a real implementation, you might want to show a toast notification
-            // For now, we'll just log to debug output
-            System.Diagnostics.Debug.WriteLine($"GlassPane: {message}");
         }
 
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)

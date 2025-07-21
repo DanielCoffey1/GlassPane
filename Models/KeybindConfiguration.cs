@@ -9,22 +9,52 @@ namespace GlassPane.Models
 
         public KeybindConfiguration()
         {
+            InitializeDefaultKeybinds();
+        }
+
+        private void InitializeDefaultKeybinds()
+        {
             // Initialize with default keybinds
             for (int i = 1; i <= 9; i++)
             {
-                AssignmentKeybinds[i] = new KeybindInfo
-                {
-                    Modifiers = ModifierKeys.Control,
-                    Key = (VirtualKey)('0' + i),
-                    Description = $"Assign to Desktop {i}"
-                };
+                AssignmentKeybinds[i] = CreateDefaultAssignmentKeybind(i);
+                SwitchKeybinds[i] = CreateDefaultSwitchKeybind(i);
+            }
+        }
 
-                SwitchKeybinds[i] = new KeybindInfo
+        public static KeybindInfo CreateDefaultAssignmentKeybind(int desktopNumber)
+        {
+            return new KeybindInfo
+            {
+                Modifiers = ModifierKeys.Control,
+                Key = (VirtualKey)('0' + desktopNumber),
+                Description = $"Assign to Desktop {desktopNumber}"
+            };
+        }
+
+        public static KeybindInfo CreateDefaultSwitchKeybind(int desktopNumber)
+        {
+            return new KeybindInfo
+            {
+                Modifiers = ModifierKeys.Alt,
+                Key = (VirtualKey)('0' + desktopNumber),
+                Description = $"Switch to Desktop {desktopNumber}"
+            };
+        }
+
+        public void EnsureAllKeybindsExist()
+        {
+            for (int i = 1; i <= 9; i++)
+            {
+                if (!AssignmentKeybinds.ContainsKey(i))
                 {
-                    Modifiers = ModifierKeys.Alt,
-                    Key = (VirtualKey)('0' + i),
-                    Description = $"Switch to Desktop {i}"
-                };
+                    AssignmentKeybinds[i] = CreateDefaultAssignmentKeybind(i);
+                }
+
+                if (!SwitchKeybinds.ContainsKey(i))
+                {
+                    SwitchKeybinds[i] = CreateDefaultSwitchKeybind(i);
+                }
             }
         }
     }

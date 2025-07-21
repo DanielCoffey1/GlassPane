@@ -134,83 +134,17 @@ namespace GlassPane.Services
 
         private int GetCurrentDesktopCount()
         {
-            try
-            {
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "powershell.exe",
-                    Arguments = "-Command \"(Get-VirtualDesktop).Count\"",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    CreateNoWindow = true
-                };
-
-                using (var process = Process.Start(startInfo))
-                {
-                    string output = process.StandardOutput.ReadToEnd();
-                    process.WaitForExit();
-
-                    if (int.TryParse(output.Trim(), out int count))
-                    {
-                        return count;
-                    }
-                }
-            }
-            catch
-            {
-                // If PowerShell command fails, assume at least 1 desktop exists
-            }
-
-            return 1;
+            return PowerShellHelper.GetCurrentDesktopCount();
         }
 
         private void CreateNewDesktop()
         {
-            try
-            {
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "powershell.exe",
-                    Arguments = "-Command \"New-VirtualDesktop\"",
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-
-                using (var process = Process.Start(startInfo))
-                {
-                    process.WaitForExit();
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("Failed to create new virtual desktop", ex);
-            }
+            PowerShellHelper.CreateNewDesktop();
         }
 
         private void SwitchToDesktopByNumber(int desktopNumber)
         {
-            try
-            {
-                // Convert to 0-based index
-                int desktopIndex = desktopNumber - 1;
-
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "powershell.exe",
-                    Arguments = $"-Command \"$desktops = Get-VirtualDesktop; if ($desktops.Count -gt {desktopIndex}) {{ $desktops[{desktopIndex}] | Switch-VirtualDesktop }}\"",
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-
-                using (var process = Process.Start(startInfo))
-                {
-                    process.WaitForExit();
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException($"Failed to switch to desktop {desktopNumber}", ex);
-            }
+            PowerShellHelper.SwitchToDesktop(desktopNumber);
         }
 
         private void FocusAndMaximizeWindow(IntPtr windowHandle)

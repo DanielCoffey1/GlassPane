@@ -53,28 +53,7 @@ namespace GlassPane.Services
                     var config = JsonSerializer.Deserialize<KeybindConfiguration>(json);
                     
                     // Ensure all desktop numbers have keybinds
-                    for (int i = 1; i <= 9; i++)
-                    {
-                        if (!config.AssignmentKeybinds.ContainsKey(i))
-                        {
-                            config.AssignmentKeybinds[i] = new KeybindInfo
-                            {
-                                Modifiers = ModifierKeys.Control,
-                                Key = (VirtualKey)('0' + i),
-                                Description = $"Assign to Desktop {i}"
-                            };
-                        }
-
-                        if (!config.SwitchKeybinds.ContainsKey(i))
-                        {
-                            config.SwitchKeybinds[i] = new KeybindInfo
-                            {
-                                Modifiers = ModifierKeys.Alt,
-                                Key = (VirtualKey)('0' + i),
-                                Description = $"Switch to Desktop {i}"
-                            };
-                        }
-                    }
+                    config.EnsureAllKeybindsExist();
 
                     return config;
                 }
