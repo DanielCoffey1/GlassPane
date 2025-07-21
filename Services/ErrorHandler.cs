@@ -15,10 +15,7 @@ namespace GlassPane.Services
             // Show message box if requested
             if (showMessageBox)
             {
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    MessageBox.Show(errorMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                });
+                UIHelper.ShowError(errorMessage);
             }
         }
 
@@ -33,12 +30,7 @@ namespace GlassPane.Services
 
         public static bool ConfirmAction(string message, string title = "Confirm")
         {
-            var result = Application.Current.Dispatcher.Invoke(() =>
-            {
-                return MessageBox.Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Question);
-            });
-            
-            return result == MessageBoxResult.Yes;
+            return UIHelper.ShowConfirmation(message, title);
         }
     }
 } 

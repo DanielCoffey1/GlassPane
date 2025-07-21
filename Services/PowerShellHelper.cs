@@ -11,21 +11,24 @@ namespace GlassPane.Services
         private static DateTime lastCacheUpdate = DateTime.MinValue;
         private static readonly TimeSpan cacheTimeout = TimeSpan.FromSeconds(5);
 
+        private static ProcessStartInfo CreateProcessStartInfo(string command, bool redirectOutput = false)
+        {
+            return new ProcessStartInfo
+            {
+                FileName = "powershell.exe",
+                Arguments = $"-Command \"{command}\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = redirectOutput,
+                CreateNoWindow = true,
+                WindowStyle = ProcessWindowStyle.Hidden
+            };
+        }
+
         public static string ExecuteCommand(string command)
         {
             try
             {
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "powershell.exe",
-                    Arguments = $"-Command \"{command}\"",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    CreateNoWindow = true,
-                    WindowStyle = ProcessWindowStyle.Hidden
-                };
-
-                using (var process = Process.Start(startInfo))
+                using (var process = Process.Start(CreateProcessStartInfo(command, true)))
                 {
                     string output = process.StandardOutput.ReadToEnd();
                     process.WaitForExit();
@@ -42,16 +45,7 @@ namespace GlassPane.Services
         {
             try
             {
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "powershell.exe",
-                    Arguments = $"-Command \"{command}\"",
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    WindowStyle = ProcessWindowStyle.Hidden
-                };
-
-                using (var process = Process.Start(startInfo))
+                using (var process = Process.Start(CreateProcessStartInfo(command, false)))
                 {
                     process.WaitForExit();
                 }
@@ -66,17 +60,7 @@ namespace GlassPane.Services
         {
             try
             {
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "powershell.exe",
-                    Arguments = $"-Command \"{command}\"",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    CreateNoWindow = true,
-                    WindowStyle = ProcessWindowStyle.Hidden
-                };
-
-                using (var process = Process.Start(startInfo))
+                using (var process = Process.Start(CreateProcessStartInfo(command, true)))
                 {
                     string output = await process.StandardOutput.ReadToEndAsync();
                     await process.WaitForExitAsync();
@@ -93,16 +77,7 @@ namespace GlassPane.Services
         {
             try
             {
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "powershell.exe",
-                    Arguments = $"-Command \"{command}\"",
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    WindowStyle = ProcessWindowStyle.Hidden
-                };
-
-                using (var process = Process.Start(startInfo))
+                using (var process = Process.Start(CreateProcessStartInfo(command, false)))
                 {
                     await process.WaitForExitAsync();
                 }

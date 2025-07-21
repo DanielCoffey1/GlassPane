@@ -54,24 +54,17 @@ namespace GlassPane.Services
             int hotkeyIdCounter = 1;
 
             // Register assignment keybinds
-            foreach (var kvp in keybindConfig.AssignmentKeybinds)
-            {
-                int desktopNumber = kvp.Key;
-                var keybind = kvp.Value;
-                
-                uint modifiers = ConvertModifiers(keybind.Modifiers);
-                uint virtualKey = (uint)keybind.Key;
-
-                if (WindowsAPI.RegisterHotKey(hwndSource.Handle, hotkeyIdCounter, modifiers, virtualKey))
-                {
-                    hotkeyActions[hotkeyIdCounter] = () => AssignWindowToDesktop(desktopNumber);
-                    hotkeyIds[desktopNumber] = hotkeyIdCounter;
-                    hotkeyIdCounter++;
-                }
-            }
+            hotkeyIdCounter = RegisterKeybindSet(keybindConfig.AssignmentKeybinds, AssignWindowToDesktop, hotkeyIdCounter);
 
             // Register switch keybinds
-            foreach (var kvp in keybindConfig.SwitchKeybinds)
+            hotkeyIdCounter = RegisterKeybindSet(keybindConfig.SwitchKeybinds, SwitchToDesktop, hotkeyIdCounter);
+        }
+
+        private int RegisterKeybindSet(Dictionary<int, KeybindInfo> keybinds, Action<int> action, int startId)
+        {
+            int hotkeyId = startId;
+
+            foreach (var kvp in keybinds)
             {
                 int desktopNumber = kvp.Key;
                 var keybind = kvp.Value;
@@ -79,13 +72,15 @@ namespace GlassPane.Services
                 uint modifiers = ConvertModifiers(keybind.Modifiers);
                 uint virtualKey = (uint)keybind.Key;
 
-                if (WindowsAPI.RegisterHotKey(hwndSource.Handle, hotkeyIdCounter, modifiers, virtualKey))
+                if (WindowsAPI.RegisterHotKey(hwndSource.Handle, hotkeyId, modifiers, virtualKey))
                 {
-                    hotkeyActions[hotkeyIdCounter] = () => SwitchToDesktop(desktopNumber);
-                    hotkeyIds[desktopNumber] = hotkeyIdCounter;
-                    hotkeyIdCounter++;
+                    hotkeyActions[hotkeyId] = () => action(desktopNumber);
+                    hotkeyIds[desktopNumber] = hotkeyId;
+                    hotkeyId++;
                 }
             }
+
+            return hotkeyId;
         }
 
         private uint ConvertModifiers(ModifierKeys modifiers)
