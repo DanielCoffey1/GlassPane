@@ -36,6 +36,8 @@ namespace GlassPane
             // Create tray menu
             trayMenu = new ContextMenuStrip();
             trayMenu.Items.Add("Show Window", null, (s, e) => ShowWindow());
+            trayMenu.Items.Add("Configure Keybinds", null, (s, e) => ConfigureKeybinds());
+            trayMenu.Items.Add("-"); // Separator
             trayMenu.Items.Add("Start Service", null, (s, e) => StartService());
             trayMenu.Items.Add("Stop Service", null, (s, e) => StopService());
             trayMenu.Items.Add("-"); // Separator
@@ -73,9 +75,9 @@ namespace GlassPane
         private void UpdateTrayMenu()
         {
             // Remove existing assignment items (after separator)
-            while (trayMenu.Items.Count > 4)
+            while (trayMenu.Items.Count > 6) // Updated to account for new menu items
             {
-                trayMenu.Items.RemoveAt(4);
+                trayMenu.Items.RemoveAt(6);
             }
 
             if (assignments.Count > 0)
@@ -149,6 +151,31 @@ namespace GlassPane
             }
         }
 
+        private void ConfigureKeybinds()
+        {
+            try
+            {
+                var configWindow = new KeybindConfigWindow();
+                configWindow.Owner = this;
+                
+                if (configWindow.ShowDialog() == true)
+                {
+                    // Reload hotkey configuration
+                    hotkeyService?.ReloadConfiguration();
+                    System.Windows.MessageBox.Show(
+                        "Keybind configuration has been updated. The new keybinds are now active.",
+                        "Configuration Updated",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Failed to open keybind configuration: {ex.Message}", "Error", 
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private void BtnStartService_Click(object sender, RoutedEventArgs e)
         {
             StartService();
@@ -172,6 +199,11 @@ namespace GlassPane
                 desktopManager.ClearAllAssignments();
                 RefreshAssignmentsList();
             }
+        }
+
+        private void BtnConfigureKeybinds_Click(object sender, RoutedEventArgs e)
+        {
+            ConfigureKeybinds();
         }
 
         private void RemoveAssignment_Click(object sender, RoutedEventArgs e)

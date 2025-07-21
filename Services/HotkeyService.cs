@@ -4,6 +4,8 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using GlassPane.Native;
+using GlassPane.Models;
+using GlassPane.Services;
 
 namespace GlassPane.Services
 {
@@ -11,13 +13,17 @@ namespace GlassPane.Services
     {
         private HwndSource hwndSource;
         private Dictionary<int, Action> hotkeyActions;
+        private Dictionary<int, int> hotkeyIds; // Maps desktop number to hotkey ID
         private VirtualDesktopManager desktopManager;
+        private KeybindConfiguration keybindConfig;
         private bool isDisposed;
 
         public HotkeyService(VirtualDesktopManager desktopManager)
         {
             this.desktopManager = desktopManager;
             hotkeyActions = new Dictionary<int, Action>();
+            hotkeyIds = new Dictionary<int, int>();
+            LoadConfiguration();
         }
 
         public void Initialize(Window window)
@@ -27,35 +33,78 @@ namespace GlassPane.Services
             RegisterHotkeys();
         }
 
+        private void LoadConfiguration()
+        {
+            keybindConfig = ConfigurationService.Instance.LoadConfiguration();
+        }
+
+        public void ReloadConfiguration()
+        {
+            LoadConfiguration();
+            if (hwndSource != null)
+            {
+                UnregisterAllHotkeys();
+                RegisterHotkeys();
+            }
+        }
+
         private void RegisterHotkeys()
         {
-            // Register Ctrl + Number keys (1-9) for assignment
-            for (int i = 1; i <= 9; i++)
-            {
-                int hotkeyId = i;
-                uint modifiers = (uint)(WindowsAPI.MOD_CONTROL);
-                uint virtualKey = (uint)('0' + i);
+            int hotkeyIdCounter = 1;
 
-                if (WindowsAPI.RegisterHotKey(hwndSource.Handle, hotkeyId, modifiers, virtualKey))
+            // Register assignment keybinds
+            foreach (var kvp in keybindConfig.AssignmentKeybinds)
+            {
+                int desktopNumber = kvp.Key;
+                var keybind = kvp.Value;
+                
+                uint modifiers = ConvertModifiers(keybind.Modifiers);
+                uint virtualKey = (uint)keybind.Key;
+
+                if (WindowsAPI.RegisterHotKey(hwndSource.Handle, hotkeyIdCounter, modifiers, virtualKey))
                 {
-                    int desktopNumber = i;
-                    hotkeyActions[hotkeyId] = () => AssignWindowToDesktop(desktopNumber);
+                    hotkeyActions[hotkeyIdCounter] = () => AssignWindowToDesktop(desktopNumber);
+                    hotkeyIds[desktopNumber] = hotkeyIdCounter;
+                    hotkeyIdCounter++;
                 }
             }
 
-            // Register Alt + Number keys (1-9) for switching
-            for (int i = 1; i <= 9; i++)
+            // Register switch keybinds
+            foreach (var kvp in keybindConfig.SwitchKeybinds)
             {
-                int hotkeyId = i + 100; // Use different IDs for Alt combinations
-                uint modifiers = (uint)(WindowsAPI.MOD_ALT);
-                uint virtualKey = (uint)('0' + i);
+                int desktopNumber = kvp.Key;
+                var keybind = kvp.Value;
+                
+                uint modifiers = ConvertModifiers(keybind.Modifiers);
+                uint virtualKey = (uint)keybind.Key;
 
-                if (WindowsAPI.RegisterHotKey(hwndSource.Handle, hotkeyId, modifiers, virtualKey))
+                if (WindowsAPI.RegisterHotKey(hwndSource.Handle, hotkeyIdCounter, modifiers, virtualKey))
                 {
-                    int desktopNumber = i;
-                    hotkeyActions[hotkeyId] = () => SwitchToDesktop(desktopNumber);
+                    hotkeyActions[hotkeyIdCounter] = () => SwitchToDesktop(desktopNumber);
+                    hotkeyIds[desktopNumber] = hotkeyIdCounter;
+                    hotkeyIdCounter++;
                 }
             }
+        }
+
+        private uint ConvertModifiers(ModifierKeys modifiers)
+        {
+            uint result = 0;
+            if ((modifiers & ModifierKeys.Alt) != 0) result |= WindowsAPI.MOD_ALT;
+            if ((modifiers & ModifierKeys.Control) != 0) result |= WindowsAPI.MOD_CONTROL;
+            if ((modifiers & ModifierKeys.Shift) != 0) result |= WindowsAPI.MOD_SHIFT;
+            if ((modifiers & ModifierKeys.Windows) != 0) result |= WindowsAPI.MOD_WIN;
+            return result;
+        }
+
+        private void UnregisterAllHotkeys()
+        {
+            foreach (int hotkeyId in hotkeyActions.Keys)
+            {
+                WindowsAPI.UnregisterHotKey(hwndSource.Handle, hotkeyId);
+            }
+            hotkeyActions.Clear();
+            hotkeyIds.Clear();
         }
 
         private void AssignWindowToDesktop(int desktopNumber)
@@ -111,18 +160,14 @@ namespace GlassPane.Services
             {
                 if (hwndSource != null)
                 {
-                    // Unregister all hotkeys
-                    foreach (int hotkeyId in hotkeyActions.Keys)
-                    {
-                        WindowsAPI.UnregisterHotKey(hwndSource.Handle, hotkeyId);
-                    }
-
+                    UnregisterAllHotkeys();
                     hwndSource.RemoveHook(WndProc);
                     hwndSource.Dispose();
                     hwndSource = null;
                 }
 
                 hotkeyActions.Clear();
+                hotkeyIds.Clear();
                 isDisposed = true;
             }
         }

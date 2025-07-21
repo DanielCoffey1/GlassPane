@@ -93,6 +93,10 @@
                         Content="Clear All Assignments" 
                         Style="{StaticResource ModernButton}"
                         Click="BtnClearAll_Click"/>
+                <Button x:Name="btnConfigureKeybinds" 
+                        Content="Configure Keybinds" 
+                        Style="{StaticResource ModernButton}"
+                        Click="BtnConfigureKeybinds_Click"/>
             </StackPanel>
         </StackPanel>
 
@@ -141,7 +145,7 @@
         <!-- Footer -->
         <StackPanel Grid.Row="2" Margin="0,20,0,0">
             <Separator Margin="0,0,0,15"/>
-            <TextBlock Text="Hotkeys:" 
+            <TextBlock Text="Hotkeys (Default):" 
                        FontWeight="SemiBold" 
                        Margin="0,0,0,5"/>
             <TextBlock Text="Ctrl + [Number] - Assign focused window to Desktop [Number]" 
@@ -150,6 +154,10 @@
             <TextBlock Text="Alt + [Number] - Switch to Desktop [Number] and focus assigned window" 
                        FontSize="12" 
                        Foreground="#666666"/>
+            <TextBlock Text="Customize keybinds using the 'Configure Keybinds' button or tray menu." 
+                       FontSize="12" 
+                       Foreground="#666666" 
+                       Margin="0,5,0,0"/>
             <TextBlock Text="The application will minimize to system tray when closed." 
                        FontSize="12" 
                        Foreground="#666666" 
