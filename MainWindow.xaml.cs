@@ -46,6 +46,15 @@ namespace GlassPane
 
             trayIcon.ContextMenuStrip = trayMenu;
             trayIcon.DoubleClick += (s, e) => ShowWindow();
+            
+            // Add right-click handler to the tray icon itself
+            trayIcon.MouseClick += (s, e) => 
+            {
+                if (e.Button == MouseButtons.Right)
+                {
+                    trayMenu.Show();
+                }
+            };
         }
 
         private void InitializeDesktopManager()
@@ -75,22 +84,31 @@ namespace GlassPane
 
         private void UpdateTrayMenu()
         {
-            // Remove existing assignment items (after separator)
-            while (trayMenu.Items.Count > 6) // Updated to account for new menu items
+            // Remove existing assignment items (after separator, but preserve Exit option)
+            // Keep the first 7 items: Show Window, Configure Keybinds, -, Start Service, Stop Service, -, Exit
+            while (trayMenu.Items.Count > 7)
             {
-                trayMenu.Items.RemoveAt(6);
+                trayMenu.Items.RemoveAt(7);
             }
 
             if (assignments.Count > 0)
             {
-                trayMenu.Items.Add("-"); // Separator
-                trayMenu.Items.Add("Assignments:", null, null).Enabled = false;
+                // Add separator
+                trayMenu.Items.Insert(7, new ToolStripSeparator());
 
+                // Add assignments header
+                var header = new ToolStripMenuItem("Assignments:") { Enabled = false };
+                trayMenu.Items.Insert(8, header);
+
+                // Add each assignment
+                int insertIndex = 9;
                 foreach (var assignment in assignments)
                 {
-                    var item = trayMenu.Items.Add($"{assignment.DesktopName}: {assignment.WindowTitle}");
+                    var item = new ToolStripMenuItem($"{assignment.DesktopName}: {assignment.WindowTitle}");
                     item.Tag = assignment.DesktopNumber;
                     item.Click += (s, e) => SwitchToDesktop(assignment.DesktopNumber);
+                    trayMenu.Items.Insert(insertIndex, item);
+                    insertIndex++;
                 }
             }
         }
