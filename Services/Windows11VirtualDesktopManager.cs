@@ -80,11 +80,35 @@ namespace GlassPane.Services
                 // Switch to the desktop using PowerShell
                 SwitchToDesktopByNumber(desktopNumber);
 
-                // Focus and maximize the assigned window
-                Task.Delay(1000).ContinueWith(_ =>
+                // Focus and maximize the assigned window with minimal delay
+                Task.Delay(50).ContinueWith(_ =>
                 {
                     FocusAndMaximizeWindow(assignment.WindowHandle);
                 });
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to switch to desktop {desktopNumber}", ex);
+            }
+        }
+
+        public async Task SwitchToDesktopAsync(int desktopNumber)
+        {
+            try
+            {
+                if (!assignments.ContainsKey(desktopNumber))
+                {
+                    throw new InvalidOperationException($"No assignment found for desktop {desktopNumber}");
+                }
+
+                var assignment = assignments[desktopNumber];
+
+                // Switch to the desktop using PowerShell asynchronously
+                await SwitchToDesktopByNumberAsync(desktopNumber);
+
+                // Focus and maximize the assigned window with minimal delay
+                await Task.Delay(50);
+                FocusAndMaximizeWindow(assignment.WindowHandle);
             }
             catch (Exception ex)
             {
@@ -134,97 +158,45 @@ namespace GlassPane.Services
 
         private int GetCurrentDesktopCount()
         {
-            try
-            {
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "powershell.exe",
-                    Arguments = "-Command \"(Get-VirtualDesktop).Count\"",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    CreateNoWindow = true
-                };
-
-                using (var process = Process.Start(startInfo))
-                {
-                    string output = process.StandardOutput.ReadToEnd();
-                    process.WaitForExit();
-
-                    if (int.TryParse(output.Trim(), out int count))
-                    {
-                        return count;
-                    }
-                }
-            }
-            catch
-            {
-                // If PowerShell command fails, assume at least 1 desktop exists
-            }
-
-            return 1;
+            return PowerShellHelper.GetCurrentDesktopCount();
         }
 
         private void CreateNewDesktop()
         {
-            try
-            {
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "powershell.exe",
-                    Arguments = "-Command \"New-VirtualDesktop\"",
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-
-                using (var process = Process.Start(startInfo))
-                {
-                    process.WaitForExit();
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("Failed to create new virtual desktop", ex);
-            }
+            PowerShellHelper.CreateNewDesktop();
         }
 
         private void SwitchToDesktopByNumber(int desktopNumber)
         {
-            try
-            {
-                // Convert to 0-based index
-                int desktopIndex = desktopNumber - 1;
+            PowerShellHelper.SwitchToDesktop(desktopNumber);
+        }
 
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "powershell.exe",
-                    Arguments = $"-Command \"$desktops = Get-VirtualDesktop; if ($desktops.Count -gt {desktopIndex}) {{ $desktops[{desktopIndex}] | Switch-VirtualDesktop }}\"",
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-
-                using (var process = Process.Start(startInfo))
-                {
-                    process.WaitForExit();
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException($"Failed to switch to desktop {desktopNumber}", ex);
-            }
+        private async Task SwitchToDesktopByNumberAsync(int desktopNumber)
+        {
+            await PowerShellHelper.SwitchToDesktopAsync(desktopNumber);
         }
 
         private void FocusAndMaximizeWindow(IntPtr windowHandle)
         {
             if (windowHandle != IntPtr.Zero && WindowsAPI.IsWindowVisible(windowHandle))
             {
+                // Use SetWindowPos for more efficient window operations
+                WindowsAPI.SetWindowPos(windowHandle, IntPtr.Zero, 0, 0, 0, 0, 
+                    WindowsAPI.SWP_NOMOVE | WindowsAPI.SWP_NOSIZE | WindowsAPI.SWP_SHOWWINDOW);
+                
                 WindowsAPI.SetForegroundWindow(windowHandle);
                 
+                // Only restore if minimized, then maximize
                 if (WindowsAPI.IsIconic(windowHandle))
                 {
                     WindowsAPI.ShowWindow(windowHandle, WindowsAPI.SW_RESTORE);
                 }
                 
-                WindowsAPI.ShowWindow(windowHandle, WindowsAPI.SW_MAXIMIZE);
+                // Only maximize if not already maximized
+                if (!WindowsAPI.IsZoomed(windowHandle))
+                {
+                    WindowsAPI.ShowWindow(windowHandle, WindowsAPI.SW_MAXIMIZE);
+                }
             }
         }
 

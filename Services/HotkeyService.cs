@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
 using GlassPane.Native;
+using GlassPane.Models;
+using GlassPane.Services;
 
 namespace GlassPane.Services
 {
@@ -11,13 +14,17 @@ namespace GlassPane.Services
     {
         private HwndSource hwndSource;
         private Dictionary<int, Action> hotkeyActions;
+        private Dictionary<int, int> hotkeyIds; // Maps desktop number to hotkey ID
         private VirtualDesktopManager desktopManager;
+        private KeybindConfiguration keybindConfig;
         private bool isDisposed;
 
         public HotkeyService(VirtualDesktopManager desktopManager)
         {
             this.desktopManager = desktopManager;
             hotkeyActions = new Dictionary<int, Action>();
+            hotkeyIds = new Dictionary<int, int>();
+            LoadConfiguration();
         }
 
         public void Initialize(Window window)
@@ -27,35 +34,73 @@ namespace GlassPane.Services
             RegisterHotkeys();
         }
 
+        private void LoadConfiguration()
+        {
+            keybindConfig = ConfigurationService.Instance.LoadConfiguration();
+        }
+
+        public void ReloadConfiguration()
+        {
+            LoadConfiguration();
+            if (hwndSource != null)
+            {
+                UnregisterAllHotkeys();
+                RegisterHotkeys();
+            }
+        }
+
         private void RegisterHotkeys()
         {
-            // Register Ctrl + Number keys (1-9) for assignment
-            for (int i = 1; i <= 9; i++)
+            int hotkeyIdCounter = 1;
+
+            // Register assignment keybinds
+            hotkeyIdCounter = RegisterKeybindSet(keybindConfig.AssignmentKeybinds, AssignWindowToDesktop, hotkeyIdCounter);
+
+            // Register switch keybinds
+            hotkeyIdCounter = RegisterKeybindSet(keybindConfig.SwitchKeybinds, SwitchToDesktop, hotkeyIdCounter);
+        }
+
+        private int RegisterKeybindSet(Dictionary<int, KeybindInfo> keybinds, Action<int> action, int startId)
+        {
+            int hotkeyId = startId;
+
+            foreach (var kvp in keybinds)
             {
-                int hotkeyId = i;
-                uint modifiers = (uint)(WindowsAPI.MOD_CONTROL);
-                uint virtualKey = (uint)('0' + i);
+                int desktopNumber = kvp.Key;
+                var keybind = kvp.Value;
+                
+                uint modifiers = ConvertModifiers(keybind.Modifiers);
+                uint virtualKey = (uint)keybind.Key;
 
                 if (WindowsAPI.RegisterHotKey(hwndSource.Handle, hotkeyId, modifiers, virtualKey))
                 {
-                    int desktopNumber = i;
-                    hotkeyActions[hotkeyId] = () => AssignWindowToDesktop(desktopNumber);
+                    hotkeyActions[hotkeyId] = () => action(desktopNumber);
+                    hotkeyIds[desktopNumber] = hotkeyId;
+                    hotkeyId++;
                 }
             }
 
-            // Register Alt + Number keys (1-9) for switching
-            for (int i = 1; i <= 9; i++)
+            return hotkeyId;
+        }
+
+        private uint ConvertModifiers(ModifierKeys modifiers)
+        {
+            uint result = 0;
+            if ((modifiers & ModifierKeys.Alt) != 0) result |= WindowsAPI.MOD_ALT;
+            if ((modifiers & ModifierKeys.Control) != 0) result |= WindowsAPI.MOD_CONTROL;
+            if ((modifiers & ModifierKeys.Shift) != 0) result |= WindowsAPI.MOD_SHIFT;
+            if ((modifiers & ModifierKeys.Windows) != 0) result |= WindowsAPI.MOD_WIN;
+            return result;
+        }
+
+        private void UnregisterAllHotkeys()
+        {
+            foreach (int hotkeyId in hotkeyActions.Keys)
             {
-                int hotkeyId = i + 100; // Use different IDs for Alt combinations
-                uint modifiers = (uint)(WindowsAPI.MOD_ALT);
-                uint virtualKey = (uint)('0' + i);
-
-                if (WindowsAPI.RegisterHotKey(hwndSource.Handle, hotkeyId, modifiers, virtualKey))
-                {
-                    int desktopNumber = i;
-                    hotkeyActions[hotkeyId] = () => SwitchToDesktop(desktopNumber);
-                }
+                WindowsAPI.UnregisterHotKey(hwndSource.Handle, hotkeyId);
             }
+            hotkeyActions.Clear();
+            hotkeyIds.Clear();
         }
 
         private void AssignWindowToDesktop(int desktopNumber)
@@ -63,11 +108,11 @@ namespace GlassPane.Services
             try
             {
                 desktopManager.AssignWindowToDesktop(desktopNumber);
-                ShowNotification($"Assigned window to Desktop {desktopNumber}");
+                ErrorHandler.ShowNotification($"Assigned window to Desktop {desktopNumber}");
             }
             catch (Exception ex)
             {
-                ShowNotification($"Failed to assign window: {ex.Message}");
+                ErrorHandler.ShowNotification($"Failed to assign window: {ex.Message}", true);
             }
         }
 
@@ -75,19 +120,23 @@ namespace GlassPane.Services
         {
             try
             {
-                desktopManager.SwitchToDesktop(desktopNumber);
+                // Use async version for better performance, but don't await to avoid blocking
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await desktopManager.SwitchToDesktopAsync(desktopNumber);
+                    }
+                    catch (Exception ex)
+                    {
+                        ErrorHandler.ShowNotification($"Failed to switch to desktop: {ex.Message}", true);
+                    }
+                });
             }
             catch (Exception ex)
             {
-                ShowNotification($"Failed to switch to desktop: {ex.Message}");
+                ErrorHandler.ShowNotification($"Failed to switch to desktop: {ex.Message}", true);
             }
-        }
-
-        private void ShowNotification(string message)
-        {
-            // In a real implementation, you might want to show a toast notification
-            // For now, we'll just log to debug output
-            System.Diagnostics.Debug.WriteLine($"GlassPane: {message}");
         }
 
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -111,18 +160,14 @@ namespace GlassPane.Services
             {
                 if (hwndSource != null)
                 {
-                    // Unregister all hotkeys
-                    foreach (int hotkeyId in hotkeyActions.Keys)
-                    {
-                        WindowsAPI.UnregisterHotKey(hwndSource.Handle, hotkeyId);
-                    }
-
+                    UnregisterAllHotkeys();
                     hwndSource.RemoveHook(WndProc);
                     hwndSource.Dispose();
                     hwndSource = null;
                 }
 
                 hotkeyActions.Clear();
+                hotkeyIds.Clear();
                 isDisposed = true;
             }
         }

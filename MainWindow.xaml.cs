@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Drawing;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Interop;
@@ -36,6 +37,8 @@ namespace GlassPane
             // Create tray menu
             trayMenu = new ContextMenuStrip();
             trayMenu.Items.Add("Show Window", null, (s, e) => ShowWindow());
+            trayMenu.Items.Add("Configure Keybinds", null, (s, e) => ConfigureKeybinds());
+            trayMenu.Items.Add("-"); // Separator
             trayMenu.Items.Add("Start Service", null, (s, e) => StartService());
             trayMenu.Items.Add("Stop Service", null, (s, e) => StopService());
             trayMenu.Items.Add("-"); // Separator
@@ -43,6 +46,15 @@ namespace GlassPane
 
             trayIcon.ContextMenuStrip = trayMenu;
             trayIcon.DoubleClick += (s, e) => ShowWindow();
+            
+            // Add right-click handler to the tray icon itself
+            trayIcon.MouseClick += (s, e) => 
+            {
+                if (e.Button == MouseButtons.Right)
+                {
+                    trayMenu.Show();
+                }
+            };
         }
 
         private void InitializeDesktopManager()
@@ -72,22 +84,31 @@ namespace GlassPane
 
         private void UpdateTrayMenu()
         {
-            // Remove existing assignment items (after separator)
-            while (trayMenu.Items.Count > 4)
+            // Remove existing assignment items (after separator, but preserve Exit option)
+            // Keep the first 7 items: Show Window, Configure Keybinds, -, Start Service, Stop Service, -, Exit
+            while (trayMenu.Items.Count > 7)
             {
-                trayMenu.Items.RemoveAt(4);
+                trayMenu.Items.RemoveAt(7);
             }
 
             if (assignments.Count > 0)
             {
-                trayMenu.Items.Add("-"); // Separator
-                trayMenu.Items.Add("Assignments:", null, null).Enabled = false;
+                // Add separator
+                trayMenu.Items.Insert(7, new ToolStripSeparator());
 
+                // Add assignments header
+                var header = new ToolStripMenuItem("Assignments:") { Enabled = false };
+                trayMenu.Items.Insert(8, header);
+
+                // Add each assignment
+                int insertIndex = 9;
                 foreach (var assignment in assignments)
                 {
-                    var item = trayMenu.Items.Add($"{assignment.DesktopName}: {assignment.WindowTitle}");
+                    var item = new ToolStripMenuItem($"{assignment.DesktopName}: {assignment.WindowTitle}");
                     item.Tag = assignment.DesktopNumber;
                     item.Click += (s, e) => SwitchToDesktop(assignment.DesktopNumber);
+                    trayMenu.Items.Insert(insertIndex, item);
+                    insertIndex++;
                 }
             }
         }
@@ -140,11 +161,51 @@ namespace GlassPane
         {
             try
             {
-                desktopManager.SwitchToDesktop(desktopNumber);
+                // Use async version for better performance, but don't await to avoid blocking UI
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await desktopManager.SwitchToDesktopAsync(desktopNumber);
+                    }
+                    catch (Exception ex)
+                    {
+                        Dispatcher.Invoke(() =>
+                        {
+                            System.Windows.MessageBox.Show($"Failed to switch to desktop: {ex.Message}", "Error", 
+                                MessageBoxButton.OK, MessageBoxImage.Error);
+                        });
+                    }
+                });
             }
             catch (Exception ex)
             {
                 System.Windows.MessageBox.Show($"Failed to switch to desktop: {ex.Message}", "Error", 
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ConfigureKeybinds()
+        {
+            try
+            {
+                var configWindow = new KeybindConfigWindow();
+                configWindow.Owner = this;
+                
+                if (configWindow.ShowDialog() == true)
+                {
+                    // Reload hotkey configuration
+                    hotkeyService?.ReloadConfiguration();
+                    System.Windows.MessageBox.Show(
+                        "Keybind configuration has been updated. The new keybinds are now active.",
+                        "Configuration Updated",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Failed to open keybind configuration: {ex.Message}", "Error", 
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -172,6 +233,11 @@ namespace GlassPane
                 desktopManager.ClearAllAssignments();
                 RefreshAssignmentsList();
             }
+        }
+
+        private void BtnConfigureKeybinds_Click(object sender, RoutedEventArgs e)
+        {
+            ConfigureKeybinds();
         }
 
         private void RemoveAssignment_Click(object sender, RoutedEventArgs e)
