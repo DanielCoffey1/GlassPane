@@ -80,11 +80,35 @@ namespace GlassPane.Services
                 // Switch to the desktop using PowerShell
                 SwitchToDesktopByNumber(desktopNumber);
 
-                // Focus and maximize the assigned window
-                Task.Delay(1000).ContinueWith(_ =>
+                // Focus and maximize the assigned window with minimal delay
+                Task.Delay(50).ContinueWith(_ =>
                 {
                     FocusAndMaximizeWindow(assignment.WindowHandle);
                 });
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to switch to desktop {desktopNumber}", ex);
+            }
+        }
+
+        public async Task SwitchToDesktopAsync(int desktopNumber)
+        {
+            try
+            {
+                if (!assignments.ContainsKey(desktopNumber))
+                {
+                    throw new InvalidOperationException($"No assignment found for desktop {desktopNumber}");
+                }
+
+                var assignment = assignments[desktopNumber];
+
+                // Switch to the desktop using PowerShell asynchronously
+                await SwitchToDesktopByNumberAsync(desktopNumber);
+
+                // Focus and maximize the assigned window with minimal delay
+                await Task.Delay(50);
+                FocusAndMaximizeWindow(assignment.WindowHandle);
             }
             catch (Exception ex)
             {
@@ -147,18 +171,32 @@ namespace GlassPane.Services
             PowerShellHelper.SwitchToDesktop(desktopNumber);
         }
 
+        private async Task SwitchToDesktopByNumberAsync(int desktopNumber)
+        {
+            await PowerShellHelper.SwitchToDesktopAsync(desktopNumber);
+        }
+
         private void FocusAndMaximizeWindow(IntPtr windowHandle)
         {
             if (windowHandle != IntPtr.Zero && WindowsAPI.IsWindowVisible(windowHandle))
             {
+                // Use SetWindowPos for more efficient window operations
+                WindowsAPI.SetWindowPos(windowHandle, IntPtr.Zero, 0, 0, 0, 0, 
+                    WindowsAPI.SWP_NOMOVE | WindowsAPI.SWP_NOSIZE | WindowsAPI.SWP_SHOWWINDOW);
+                
                 WindowsAPI.SetForegroundWindow(windowHandle);
                 
+                // Only restore if minimized, then maximize
                 if (WindowsAPI.IsIconic(windowHandle))
                 {
                     WindowsAPI.ShowWindow(windowHandle, WindowsAPI.SW_RESTORE);
                 }
                 
-                WindowsAPI.ShowWindow(windowHandle, WindowsAPI.SW_MAXIMIZE);
+                // Only maximize if not already maximized
+                if (!WindowsAPI.IsZoomed(windowHandle))
+                {
+                    WindowsAPI.ShowWindow(windowHandle, WindowsAPI.SW_MAXIMIZE);
+                }
             }
         }
 

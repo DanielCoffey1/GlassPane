@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Drawing;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Interop;
@@ -142,7 +143,22 @@ namespace GlassPane
         {
             try
             {
-                desktopManager.SwitchToDesktop(desktopNumber);
+                // Use async version for better performance, but don't await to avoid blocking UI
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await desktopManager.SwitchToDesktopAsync(desktopNumber);
+                    }
+                    catch (Exception ex)
+                    {
+                        Dispatcher.Invoke(() =>
+                        {
+                            System.Windows.MessageBox.Show($"Failed to switch to desktop: {ex.Message}", "Error", 
+                                MessageBoxButton.OK, MessageBoxImage.Error);
+                        });
+                    }
+                });
             }
             catch (Exception ex)
             {

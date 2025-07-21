@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
 using GlassPane.Native;
@@ -124,7 +125,18 @@ namespace GlassPane.Services
         {
             try
             {
-                desktopManager.SwitchToDesktop(desktopNumber);
+                // Use async version for better performance, but don't await to avoid blocking
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await desktopManager.SwitchToDesktopAsync(desktopNumber);
+                    }
+                    catch (Exception ex)
+                    {
+                        ErrorHandler.ShowNotification($"Failed to switch to desktop: {ex.Message}", true);
+                    }
+                });
             }
             catch (Exception ex)
             {

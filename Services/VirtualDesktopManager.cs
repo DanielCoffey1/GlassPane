@@ -65,6 +65,11 @@ namespace GlassPane.Services
             windows11Manager.SwitchToDesktop(desktopNumber);
         }
 
+        public async Task SwitchToDesktopAsync(int desktopNumber)
+        {
+            await windows11Manager.SwitchToDesktopAsync(desktopNumber);
+        }
+
         public void RemoveAssignment(int desktopNumber)
         {
             windows11Manager.RemoveAssignment(desktopNumber);

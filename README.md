@@ -20,7 +20,7 @@ A powerful Windows 11 desktop management utility that allows you to assign speci
 ### Customizing Keybinds
 GlassPane supports fully customizable keybinds. You can change any keybind to any combination of:
 - **Modifiers**: Ctrl, Alt, Shift, Windows key
-- **Keys**: Numbers (0-9), Letters (A-Z), Function keys (F1-F12), and more
+- **Keys**: Numbers (0-9), Letters (A-Z), Function keys (F1-F12), Tab, Enter, Escape, Space, and more
 
 **To customize keybinds:**
 1. **From Main Window**: Click the "Configure Keybinds" button
@@ -32,6 +32,8 @@ GlassPane supports fully customizable keybinds. You can change any keybind to an
    - Click "Save Configuration" to apply changes
 
 **Configuration Storage**: Keybind settings are automatically saved to `%AppData%/GlassPane/keybinds.json` and restored on startup.
+
+**Real-time Updates**: Keybind changes take effect immediately without requiring application restart.
 
 ## Requirements
 
@@ -98,9 +100,12 @@ The main window provides:
 ### Key Components
 
 - `VirtualDesktopManager`: Main service for desktop operations
-- `Windows11VirtualDesktopManager`: PowerShell-based desktop management
+- `Windows11VirtualDesktopManager`: PowerShell-based desktop management with async support
 - `HotkeyService`: Global hotkey registration and handling with customizable keybinds
 - `ConfigurationService`: JSON-based configuration persistence
+- `PowerShellHelper`: Optimized PowerShell command execution with caching
+- `ErrorHandler`: Centralized error handling and notification system
+- `UIHelper`: Common UI operations and message dialogs
 - `KeybindConfigWindow`: WPF UI for keybind customization
 - `MainWindow`: WPF UI for assignment management
 
@@ -111,6 +116,16 @@ The application uses several Windows APIs:
 - Global hotkey registration
 - Window management and focus
 - Process information retrieval
+
+### Performance Optimizations
+
+GlassPane includes several performance optimizations:
+- **Cached PowerShell operations**: Desktop count is cached for 5 seconds to reduce overhead
+- **Async desktop switching**: Non-blocking operations prevent UI freezing
+- **Optimized window management**: Efficient API calls for faster window operations
+- **Minimal delays**: Reduced artificial delays from 1000ms to 50ms for snappy switching
+- **Hidden PowerShell processes**: Background execution without visible windows
+- **Real-time keybind updates**: Configuration changes apply instantly without restart
 
 ## Troubleshooting
 
@@ -126,6 +141,8 @@ The application uses several Windows APIs:
    - If keybinds aren't saving, check write permissions to `%AppData%/GlassPane/`
    - Use "Reset to Defaults" if custom keybinds cause problems
    - Ensure no duplicate keybind combinations are configured
+   - Keybind changes apply immediately - no restart required
+   - Check for conflicts with other applications using the same key combinations
 
 3. **Virtual Desktop Operations Failing**
    - Verify you're running Windows 11 or Windows 10 with virtual desktop support
@@ -143,6 +160,12 @@ The application logs debug information to the console. Common messages:
 - `GlassPane: Assigned window to Desktop X`
 - `GlassPane: Failed to assign window: [error message]`
 - `GlassPane: Failed to switch to desktop: [error message]`
+- `GlassPane Error: [detailed error messages]`
+
+**Performance Notes**: The application uses async operations and caching to provide
+snappy desktop switching. PowerShell operations are cached for 5 seconds to reduce
+overhead, and desktop switching uses non-blocking operations to prevent UI freezing.
+Keybind configuration changes are applied in real-time without requiring application restart.
 
 ## Development
 
@@ -178,7 +201,10 @@ GlassPane/
 │   ├── VirtualDesktopManager.cs
 │   ├── Windows11VirtualDesktopManager.cs
 │   ├── HotkeyService.cs
-│   └── ConfigurationService.cs
+│   ├── ConfigurationService.cs
+│   ├── PowerShellHelper.cs
+│   ├── ErrorHandler.cs
+│   └── UIHelper.cs
 ├── App.xaml
 ├── App.xaml.cs
 ├── MainWindow.xaml
