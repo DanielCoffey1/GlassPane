@@ -97,6 +97,10 @@
                         Content="Configure Keybinds" 
                         Style="{StaticResource ModernButton}"
                         Click="BtnConfigureKeybinds_Click"/>
+                <Button x:Name="btnConfigurePersistentApps" 
+                        Content="Configure Persistent Apps" 
+                        Style="{StaticResource ModernButton}"
+                        Click="BtnConfigurePersistentApps_Click"/>
             </StackPanel>
         </StackPanel>
 
@@ -158,6 +162,10 @@
                        FontSize="12" 
                        Foreground="#666666" 
                        Margin="0,5,0,0"/>
+            <TextBlock Text="Set up persistent app assignments to automatically assign apps to specific desktops." 
+                       FontSize="12" 
+                       Foreground="#666666" 
+                       Margin="0,2,0,0"/>
             <TextBlock Text="The application will minimize to system tray when closed." 
                        FontSize="12" 
                        Foreground="#666666" 

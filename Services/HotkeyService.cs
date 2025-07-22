@@ -17,6 +17,7 @@ namespace GlassPane.Services
         private Dictionary<int, int> hotkeyIds; // Maps desktop number to hotkey ID
         private VirtualDesktopManager desktopManager;
         private KeybindConfiguration keybindConfig;
+        private PersistentAppService persistentAppService;
         private bool isDisposed;
 
         public HotkeyService(VirtualDesktopManager desktopManager)
@@ -24,6 +25,7 @@ namespace GlassPane.Services
             this.desktopManager = desktopManager;
             hotkeyActions = new Dictionary<int, Action>();
             hotkeyIds = new Dictionary<int, int>();
+            persistentAppService = new PersistentAppService(desktopManager);
             LoadConfiguration();
         }
 
@@ -42,6 +44,7 @@ namespace GlassPane.Services
         public void ReloadConfiguration()
         {
             LoadConfiguration();
+            persistentAppService.ReloadConfiguration();
             if (hwndSource != null)
             {
                 UnregisterAllHotkeys();
@@ -103,10 +106,24 @@ namespace GlassPane.Services
             hotkeyIds.Clear();
         }
 
-        private void AssignWindowToDesktop(int desktopNumber)
+        private async void AssignWindowToDesktop(int desktopNumber)
         {
             try
             {
+                // Get the currently active window info
+                var activeWindow = ProcessAPI.GetForegroundWindowInfo();
+                if (activeWindow != null)
+                {
+                    var processName = activeWindow.ProcessName;
+                    
+                    // Check if this app already has a persistent assignment
+                    if (!persistentAppService.HasPersistentAssignment(processName))
+                    {
+                        // Prompt user to save as persistent assignment
+                        await persistentAppService.PromptForPersistentAssignmentAsync(processName, desktopNumber);
+                    }
+                }
+
                 desktopManager.AssignWindowToDesktop(desktopNumber);
                 ErrorHandler.ShowNotification($"Assigned window to Desktop {desktopNumber}");
             }
@@ -168,6 +185,7 @@ namespace GlassPane.Services
 
                 hotkeyActions.Clear();
                 hotkeyIds.Clear();
+                persistentAppService = null;
                 isDisposed = true;
             }
         }

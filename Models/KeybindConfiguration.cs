@@ -6,6 +6,7 @@ namespace GlassPane.Models
     {
         public Dictionary<int, KeybindInfo> AssignmentKeybinds { get; set; } = new Dictionary<int, KeybindInfo>();
         public Dictionary<int, KeybindInfo> SwitchKeybinds { get; set; } = new Dictionary<int, KeybindInfo>();
+        public List<PersistentAppAssignment> PersistentAppAssignments { get; set; } = new List<PersistentAppAssignment>();
 
         public KeybindConfiguration()
         {

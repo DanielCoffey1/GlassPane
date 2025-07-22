@@ -17,6 +17,7 @@ namespace GlassPane
         private ContextMenuStrip trayMenu;
         private VirtualDesktopManager desktopManager;
         private HotkeyService hotkeyService;
+        private PersistentAppService persistentAppService;
         private ObservableCollection<DesktopAssignment> assignments;
 
         public MainWindow()
@@ -38,6 +39,7 @@ namespace GlassPane
             trayMenu = new ContextMenuStrip();
             trayMenu.Items.Add("Show Window", null, (s, e) => ShowWindow());
             trayMenu.Items.Add("Configure Keybinds", null, (s, e) => ConfigureKeybinds());
+            trayMenu.Items.Add("Configure Persistent Apps", null, (s, e) => ConfigurePersistentApps());
             trayMenu.Items.Add("-"); // Separator
             trayMenu.Items.Add("Start Service", null, (s, e) => StartService());
             trayMenu.Items.Add("Stop Service", null, (s, e) => StopService());
@@ -63,6 +65,7 @@ namespace GlassPane
             desktopManager.AssignmentChanged += OnAssignmentChanged;
             
             hotkeyService = new HotkeyService(desktopManager);
+            persistentAppService = new PersistentAppService(desktopManager);
         }
 
         private void LoadAssignments()
@@ -125,14 +128,18 @@ namespace GlassPane
             Activate();
         }
 
-        private void StartService()
+        private async void StartService()
         {
             try
             {
                 desktopManager.Start();
+                hotkeyService.Initialize(this);
                 btnStartService.IsEnabled = false;
                 btnStopService.IsEnabled = true;
                 trayIcon.Text = "GlassPane - Virtual Desktop Manager (Running)";
+                
+                // Auto-assign persistent apps on startup
+                await persistentAppService.AutoAssignPersistentAppsAsync();
             }
             catch (Exception ex)
             {
@@ -210,6 +217,21 @@ namespace GlassPane
             }
         }
 
+        private void ConfigurePersistentApps()
+        {
+            try
+            {
+                var configWindow = new PersistentAppConfigWindow();
+                configWindow.Owner = this;
+                configWindow.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Failed to open persistent app configuration: {ex.Message}", "Error", 
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private void BtnStartService_Click(object sender, RoutedEventArgs e)
         {
             StartService();
@@ -238,6 +260,11 @@ namespace GlassPane
         private void BtnConfigureKeybinds_Click(object sender, RoutedEventArgs e)
         {
             ConfigureKeybinds();
+        }
+
+        private void BtnConfigurePersistentApps_Click(object sender, RoutedEventArgs e)
+        {
+            ConfigurePersistentApps();
         }
 
         private void RemoveAssignment_Click(object sender, RoutedEventArgs e)

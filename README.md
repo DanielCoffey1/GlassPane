@@ -5,11 +5,12 @@ A powerful Windows 11 desktop management utility that allows you to assign speci
 ## Features
 
 - **Window Assignment**: Assign any focused window to a specific virtual desktop
+- **Persistent App Mapping**: Pre-configure apps to automatically assign to specific desktops
 - **Dynamic Desktop Creation**: Automatically creates new virtual desktops as needed
 - **Customizable Global Hotkeys**: Fully customizable keyboard shortcuts for assignment and switching
 - **System Tray Integration**: Minimal UI with full functionality from the system tray
 - **Modern Interface**: Clean, modern WPF interface for managing assignments
-- **Configuration Persistence**: Keybind settings are saved and restored between sessions
+- **Configuration Persistence**: Keybind settings and persistent app mappings are saved and restored between sessions
 
 ## Hotkeys
 
@@ -31,7 +32,7 @@ GlassPane supports fully customizable keybinds. You can change any keybind to an
    - Use "Reset to Defaults" to restore original keybinds
    - Click "Save Configuration" to apply changes
 
-**Configuration Storage**: Keybind settings are automatically saved to `%AppData%/GlassPane/keybinds.json` and restored on startup.
+**Configuration Storage**: Keybind settings and persistent app mappings are automatically saved to `%AppData%/GlassPane/keybinds.json` and restored on startup.
 
 **Real-time Updates**: Keybind changes take effect immediately without requiring application restart.
 
@@ -66,15 +67,36 @@ GlassPane supports fully customizable keybinds. You can change any keybind to an
    - Focus on any window (Chrome, Cursor, etc.)
    - Press `Ctrl + 1` to assign it to Desktop 1
    - Press `Ctrl + 2` to assign another window to Desktop 2
+   - **Optional**: When manually assigning, you'll be prompted to save as a persistent mapping
 3. **Switch Between Desktops**:
    - Press `Alt + 1` to switch to Desktop 1 and focus the assigned window
    - Press `Alt + 2` to switch to Desktop 2 and focus the assigned window
+
+### Persistent App Mapping
+
+**Pre-configure Apps**: Set up apps to automatically assign to specific desktops when they start:
+
+1. **Configure Persistent Apps**:
+   - From Main Window: Click "Configure Persistent Apps" button
+   - From System Tray: Right-click tray icon → "Configure Persistent Apps"
+   - Add mappings like: `chrome.exe` → Desktop 1, `cursor.exe` → Desktop 2
+
+2. **Auto-assignment on Startup**: When GlassPane starts, it automatically:
+   - Scans for running processes
+   - Assigns apps to their configured desktops
+   - Skips already assigned windows
+
+3. **Manual Assignment Prompts**: When you manually assign an app (e.g., Ctrl+3 on Firefox):
+   - System checks if it's already a persistent assignment
+   - If not, prompts: "Would you like to save this assignment permanently?"
+   - Choose to make it persistent for future auto-assignment
 
 ### System Tray Menu
 
 Right-click the system tray icon to access:
 - **Show Window**: Open the main application window
 - **Configure Keybinds**: Open the keybind configuration window
+- **Configure Persistent Apps**: Open the persistent app configuration window
 - **Start/Stop Service**: Control the hotkey service
 - **Assignments**: Quick access to switch between assigned desktops
 - **Exit**: Close the application
@@ -84,6 +106,7 @@ Right-click the system tray icon to access:
 The main window provides:
 - **Service Controls**: Start/stop the hotkey service
 - **Configure Keybinds**: Access the keybind configuration window
+- **Configure Persistent Apps**: Access the persistent app configuration window
 - **Assignment List**: View all current desktop assignments
 - **Management**: Remove individual assignments or clear all
 - **Status**: See which desktops have assigned windows
@@ -102,11 +125,13 @@ The main window provides:
 - `VirtualDesktopManager`: Main service for desktop operations
 - `Windows11VirtualDesktopManager`: PowerShell-based desktop management with async support
 - `HotkeyService`: Global hotkey registration and handling with customizable keybinds
+- `PersistentAppService`: Management of persistent app-to-desktop mappings
 - `ConfigurationService`: JSON-based configuration persistence
 - `PowerShellHelper`: Optimized PowerShell command execution with caching
 - `ErrorHandler`: Centralized error handling and notification system
 - `UIHelper`: Common UI operations and message dialogs
 - `KeybindConfigWindow`: WPF UI for keybind customization
+- `PersistentAppConfigWindow`: WPF UI for persistent app configuration
 - `MainWindow`: WPF UI for assignment management
 
 ### Windows API Integration
@@ -116,6 +141,7 @@ The application uses several Windows APIs:
 - Global hotkey registration
 - Window management and focus
 - Process information retrieval
+- Window enumeration and foreground detection
 
 ### Performance Optimizations
 
@@ -194,13 +220,16 @@ Keybind configuration changes are applied in real-time without requiring applica
 GlassPane/
 ├── Models/
 │   ├── DesktopAssignment.cs
-│   └── KeybindConfiguration.cs
+│   ├── KeybindConfiguration.cs
+│   └── PersistentAppAssignment.cs
 ├── Native/
-│   └── WindowsAPI.cs
+│   ├── WindowsAPI.cs
+│   └── ProcessAPI.cs
 ├── Services/
 │   ├── VirtualDesktopManager.cs
 │   ├── Windows11VirtualDesktopManager.cs
 │   ├── HotkeyService.cs
+│   ├── PersistentAppService.cs
 │   ├── ConfigurationService.cs
 │   ├── PowerShellHelper.cs
 │   ├── ErrorHandler.cs
@@ -211,6 +240,8 @@ GlassPane/
 ├── MainWindow.xaml.cs
 ├── KeybindConfigWindow.xaml
 ├── KeybindConfigWindow.xaml.cs
+├── PersistentAppConfigWindow.xaml
+├── PersistentAppConfigWindow.xaml.cs
 └── GlassPane.csproj
 ```
 

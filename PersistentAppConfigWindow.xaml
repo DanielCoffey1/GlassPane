@@ -1,0 +1,209 @@
+<Window x:Class="GlassPane.PersistentAppConfigWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Persistent App Assignments" 
+        Height="500" 
+        Width="600"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        Background="#F5F5F5">
+    
+    <Window.Resources>
+        <Style x:Key="ModernButton" TargetType="Button">
+            <Setter Property="Background" Value="#2196F3"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="4" 
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#1976D2"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#0D47A1"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource ModernButton}">
+            <Setter Property="Background" Value="#F44336"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#D32F2F"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#B71C1C"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        
+        <Style x:Key="ModernTextBox" TargetType="TextBox">
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#CCCCCC"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Margin" Value="5"/>
+        </Style>
+        
+        <Style x:Key="ModernComboBox" TargetType="ComboBox">
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#CCCCCC"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Margin" Value="5"/>
+        </Style>
+    </Window.Resources>
+    
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,20">
+            <TextBlock Text="Persistent App Assignments" 
+                       FontSize="24" 
+                       FontWeight="Bold" 
+                       Foreground="#333333"
+                       Margin="0,0,0,10"/>
+            <TextBlock Text="Configure apps to automatically assign to specific desktops when they start" 
+                       FontSize="14" 
+                       Foreground="#666666"
+                       TextWrapping="Wrap"/>
+        </StackPanel>
+        
+        <!-- Main Content -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            
+            <!-- Current Assignments -->
+            <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                <TextBlock Text="Current Assignments" 
+                           FontSize="16" 
+                           FontWeight="SemiBold" 
+                           Margin="0,0,0,10"/>
+                
+                <ListBox x:Name="AssignmentsListBox" 
+                         Height="300" 
+                         Background="White"
+                         BorderThickness="1"
+                         BorderBrush="#CCCCCC">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{Binding ProcessName}" 
+                                               FontWeight="SemiBold" 
+                                               Foreground="#333333"/>
+                                    <TextBlock Text="{Binding Description}" 
+                                               FontSize="12" 
+                                               Foreground="#666666"/>
+                                </StackPanel>
+                                
+                                <Button Grid.Column="1" 
+                                        Content="Remove" 
+                                        Style="{StaticResource DangerButton}"
+                                        Padding="8,4"
+                                        Click="RemoveAssignment_Click"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </StackPanel>
+            
+            <!-- Add New Assignment -->
+            <StackPanel Grid.Column="2" Margin="10,0,0,0">
+                <TextBlock Text="Add New Assignment" 
+                           FontSize="16" 
+                           FontWeight="SemiBold" 
+                           Margin="0,0,0,10"/>
+                
+                <TextBlock Text="Process Name:" 
+                           FontWeight="Medium" 
+                           Margin="0,0,0,5"/>
+                <TextBox x:Name="ProcessNameTextBox" 
+                         Style="{StaticResource ModernTextBox}"/>
+                <TextBlock Text="e.g., chrome.exe" 
+                           Foreground="#999999" 
+                           FontSize="12" 
+                           Margin="8,0,0,-25" 
+                           IsHitTestVisible="False"/>
+                
+                <TextBlock Text="Desktop Number:" 
+                           FontWeight="Medium" 
+                           Margin="0,10,0,5"/>
+                <ComboBox x:Name="DesktopNumberComboBox" 
+                          Style="{StaticResource ModernComboBox}">
+                    <ComboBoxItem Content="1"/>
+                    <ComboBoxItem Content="2"/>
+                    <ComboBoxItem Content="3"/>
+                    <ComboBoxItem Content="4"/>
+                    <ComboBoxItem Content="5"/>
+                    <ComboBoxItem Content="6"/>
+                    <ComboBoxItem Content="7"/>
+                    <ComboBoxItem Content="8"/>
+                    <ComboBoxItem Content="9"/>
+                </ComboBox>
+                
+                <TextBlock Text="Description (Optional):" 
+                           FontWeight="Medium" 
+                           Margin="0,10,0,5"/>
+                <TextBox x:Name="DescriptionTextBox" 
+                         Style="{StaticResource ModernTextBox}"/>
+                <TextBlock Text="e.g., Chrome for work" 
+                           Foreground="#999999" 
+                           FontSize="12" 
+                           Margin="8,0,0,-25" 
+                           IsHitTestVisible="False"/>
+                
+                <Button x:Name="AddButton" 
+                        Content="Add Assignment" 
+                        Style="{StaticResource ModernButton}"
+                        Margin="5,15,5,5"
+                        Click="AddAssignment_Click"/>
+                
+                <Button x:Name="RefreshButton" 
+                        Content="Refresh List" 
+                        Style="{StaticResource ModernButton}"
+                        Margin="5,5,5,5"
+                        Click="RefreshButton_Click"/>
+            </StackPanel>
+        </Grid>
+        
+        <!-- Footer -->
+        <StackPanel Grid.Row="2" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Right" 
+                    Margin="0,20,0,0">
+            <Button x:Name="CloseButton" 
+                    Content="Close" 
+                    Style="{StaticResource ModernButton}"
+                    Background="#666666"
+                    Click="CloseButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Window> 

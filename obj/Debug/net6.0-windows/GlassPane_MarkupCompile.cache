@@ -10,11 +10,11 @@ none
 false
 TRACE;DEBUG;NET;NET6_0;NETCOREAPP
 C:\Users\Daniel\Documents\GitHub\GlassPane\App.xaml
-2-86696065
+3-144269110
 
-14-1624300751
+171295297412
 203-812500755
-KeybindConfigWindow.xaml;MainWindow.xaml;
+KeybindConfigWindow.xaml;MainWindow.xaml;PersistentAppConfigWindow.xaml;
 
 False
 

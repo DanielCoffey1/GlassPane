@@ -20,3 +20,5 @@ C:\Users\Daniel\Documents\GitHub\GlassPane\obj\Debug\net6.0-windows\GlassPane.dl
 C:\Users\Daniel\Documents\GitHub\GlassPane\obj\Debug\net6.0-windows\ref\GlassPane.dll
 C:\Users\Daniel\Documents\GitHub\GlassPane\obj\Debug\net6.0-windows\GlassPane.pdb
 C:\Users\Daniel\Documents\GitHub\GlassPane\obj\Debug\net6.0-windows\GlassPane.genruntimeconfig.cache
+C:\Users\Daniel\Documents\GitHub\GlassPane\obj\Debug\net6.0-windows\PersistentAppConfigWindow.baml
+C:\Users\Daniel\Documents\GitHub\GlassPane\obj\Debug\net6.0-windows\PersistentAppConfigWindow.g.cs
