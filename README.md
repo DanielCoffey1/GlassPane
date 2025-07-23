@@ -6,6 +6,7 @@ A powerful Windows 11 desktop management utility that allows you to assign speci
 
 - **Window Assignment**: Assign any focused window to a specific virtual desktop
 - **Persistent App Mapping**: Pre-configure apps to automatically assign to specific desktops
+- **Enhanced Auto-Assignment**: Improved persistent app assignment with detailed logging and manual triggers
 - **Dynamic Desktop Creation**: Automatically creates new virtual desktops as needed
 - **Customizable Global Hotkeys**: Fully customizable keyboard shortcuts for assignment and switching
 - **System Tray Integration**: Minimal UI with full functionality from the system tray
@@ -85,8 +86,14 @@ GlassPane supports fully customizable keybinds. You can change any keybind to an
    - Scans for running processes
    - Assigns apps to their configured desktops
    - Skips already assigned windows
+   - Provides detailed logging for troubleshooting
 
-3. **Manual Assignment Prompts**: When you manually assign an app (e.g., Ctrl+3 on Firefox):
+3. **Manual Auto-Assignment**: Use the "Auto-Assign Apps" button to:
+   - Manually trigger assignment of persistent apps
+   - Re-assign apps that started after GlassPane
+   - Test persistent app configurations
+
+4. **Manual Assignment Prompts**: When you manually assign an app (e.g., Ctrl+3 on Firefox):
    - System checks if it's already a persistent assignment
    - If not, prompts: "Would you like to save this assignment permanently?"
    - Choose to make it persistent for future auto-assignment
@@ -97,6 +104,7 @@ Right-click the system tray icon to access:
 - **Show Window**: Open the main application window
 - **Configure Keybinds**: Open the keybind configuration window
 - **Configure Persistent Apps**: Open the persistent app configuration window
+- **Auto-Assign Apps**: Manually trigger auto-assignment of persistent apps
 - **Start/Stop Service**: Control the hotkey service
 - **Assignments**: Quick access to switch between assigned desktops
 - **Exit**: Close the application
@@ -107,6 +115,7 @@ The main window provides:
 - **Service Controls**: Start/stop the hotkey service
 - **Configure Keybinds**: Access the keybind configuration window
 - **Configure Persistent Apps**: Access the persistent app configuration window
+- **Auto-Assign Apps**: Manually trigger auto-assignment of persistent apps
 - **Assignment List**: View all current desktop assignments
 - **Management**: Remove individual assignments or clear all
 - **Status**: See which desktops have assigned windows
@@ -180,6 +189,15 @@ GlassPane includes several performance optimizations:
    - Check Windows Defender or antivirus software
    - Run as administrator if needed
 
+5. **Persistent App Assignments Not Working**
+   - Ensure the application is running and the service is started
+   - Check that the target applications are actually running
+   - Use the "Auto-Assign Apps" button to manually trigger assignment
+   - Verify process names are correct (e.g., "chrome" not "Google Chrome")
+   - Check debug console for detailed assignment information
+   - Ensure applications have visible windows (not just background processes)
+   - Try restarting the target applications after GlassPane is running
+
 ### Debug Information
 
 The application logs debug information to the console. Common messages:
@@ -187,6 +205,16 @@ The application logs debug information to the console. Common messages:
 - `GlassPane: Failed to assign window: [error message]`
 - `GlassPane: Failed to switch to desktop: [error message]`
 - `GlassPane Error: [detailed error messages]`
+
+**Persistent App Assignment Debug Messages**:
+- `Auto-assigning X persistent apps...`
+- `Found running process: [process name]`
+- `Found X windows for [process name]`
+- `Auto-assigning [process name] ([window title]) to Desktop X`
+- `Window [window title] is already assigned`
+- `Skipping window with empty title for [process name]`
+- `Process [process name] is not running`
+- `Auto-assignment completed`
 
 **Performance Notes**: The application uses async operations and caching to provide
 snappy desktop switching. PowerShell operations are cached for 5 seconds to reduce

@@ -101,6 +101,10 @@
                         Content="Configure Persistent Apps" 
                         Style="{StaticResource ModernButton}"
                         Click="BtnConfigurePersistentApps_Click"/>
+                <Button x:Name="btnTriggerAutoAssignment" 
+                        Content="Auto-Assign Apps" 
+                        Style="{StaticResource ModernButton}"
+                        Click="BtnTriggerAutoAssignment_Click"/>
             </StackPanel>
         </StackPanel>
 

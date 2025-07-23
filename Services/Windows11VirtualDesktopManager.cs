@@ -42,12 +42,29 @@ namespace GlassPane.Services
                     throw new InvalidOperationException("No foreground window found");
                 }
 
+                AssignWindowToDesktop(desktopNumber, foregroundWindow);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to assign window to desktop {desktopNumber}", ex);
+            }
+        }
+
+        public void AssignWindowToDesktop(int desktopNumber, IntPtr windowHandle)
+        {
+            try
+            {
+                if (windowHandle == IntPtr.Zero)
+                {
+                    throw new InvalidOperationException("Invalid window handle");
+                }
+
                 // Get window information
                 StringBuilder windowTitle = new StringBuilder(256);
-                WindowsAPI.GetWindowText(foregroundWindow, windowTitle, windowTitle.Capacity);
+                WindowsAPI.GetWindowText(windowHandle, windowTitle, windowTitle.Capacity);
 
                 uint processId;
-                WindowsAPI.GetWindowThreadProcessId(foregroundWindow, out processId);
+                WindowsAPI.GetWindowThreadProcessId(windowHandle, out processId);
 
                 string processName = ProcessAPI.GetProcessName(processId);
 
@@ -55,7 +72,7 @@ namespace GlassPane.Services
                 EnsureDesktopExists(desktopNumber);
 
                 // Store the assignment
-                var assignment = new DesktopAssignment(desktopNumber, foregroundWindow, windowTitle.ToString(), processName);
+                var assignment = new DesktopAssignment(desktopNumber, windowHandle, windowTitle.ToString(), processName);
                 assignments[desktopNumber] = assignment;
 
                 OnAssignmentChanged();

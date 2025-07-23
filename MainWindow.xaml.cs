@@ -40,6 +40,7 @@ namespace GlassPane
             trayMenu.Items.Add("Show Window", null, (s, e) => ShowWindow());
             trayMenu.Items.Add("Configure Keybinds", null, (s, e) => ConfigureKeybinds());
             trayMenu.Items.Add("Configure Persistent Apps", null, (s, e) => ConfigurePersistentApps());
+            trayMenu.Items.Add("Auto-Assign Apps", null, (s, e) => TriggerAutoAssignment());
             trayMenu.Items.Add("-"); // Separator
             trayMenu.Items.Add("Start Service", null, (s, e) => StartService());
             trayMenu.Items.Add("Stop Service", null, (s, e) => StopService());
@@ -88,23 +89,23 @@ namespace GlassPane
         private void UpdateTrayMenu()
         {
             // Remove existing assignment items (after separator, but preserve Exit option)
-            // Keep the first 7 items: Show Window, Configure Keybinds, -, Start Service, Stop Service, -, Exit
-            while (trayMenu.Items.Count > 7)
+            // Keep the first 8 items: Show Window, Configure Keybinds, Configure Persistent Apps, Auto-Assign Apps, -, Start Service, Stop Service, -, Exit
+            while (trayMenu.Items.Count > 9)
             {
-                trayMenu.Items.RemoveAt(7);
+                trayMenu.Items.RemoveAt(9);
             }
 
             if (assignments.Count > 0)
             {
                 // Add separator
-                trayMenu.Items.Insert(7, new ToolStripSeparator());
+                trayMenu.Items.Insert(9, new ToolStripSeparator());
 
                 // Add assignments header
                 var header = new ToolStripMenuItem("Assignments:") { Enabled = false };
-                trayMenu.Items.Insert(8, header);
+                trayMenu.Items.Insert(10, header);
 
                 // Add each assignment
-                int insertIndex = 9;
+                int insertIndex = 11;
                 foreach (var assignment in assignments)
                 {
                     var item = new ToolStripMenuItem($"{assignment.DesktopName}: {assignment.WindowTitle}");
@@ -232,6 +233,39 @@ namespace GlassPane
             }
         }
 
+        private void TriggerAutoAssignment()
+        {
+            try
+            {
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await persistentAppService.ManualTriggerAutoAssignmentAsync();
+                        Dispatcher.Invoke(() =>
+                        {
+                            RefreshAssignmentsList();
+                            System.Windows.MessageBox.Show("Auto-assignment completed. Check the assignments list for results.", 
+                                "Auto-Assignment Complete", MessageBoxButton.OK, MessageBoxImage.Information);
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        Dispatcher.Invoke(() =>
+                        {
+                            System.Windows.MessageBox.Show($"Failed to trigger auto-assignment: {ex.Message}", "Error", 
+                                MessageBoxButton.OK, MessageBoxImage.Error);
+                        });
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Failed to trigger auto-assignment: {ex.Message}", "Error", 
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private void BtnStartService_Click(object sender, RoutedEventArgs e)
         {
             StartService();
@@ -265,6 +299,22 @@ namespace GlassPane
         private void BtnConfigurePersistentApps_Click(object sender, RoutedEventArgs e)
         {
             ConfigurePersistentApps();
+        }
+
+        private async void BtnTriggerAutoAssignment_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                await persistentAppService.ManualTriggerAutoAssignmentAsync();
+                RefreshAssignmentsList();
+                System.Windows.MessageBox.Show("Auto-assignment completed. Check the assignments list for results.", 
+                    "Auto-Assignment Complete", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Failed to trigger auto-assignment: {ex.Message}", "Error", 
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void RemoveAssignment_Click(object sender, RoutedEventArgs e)

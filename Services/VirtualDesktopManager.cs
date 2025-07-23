@@ -60,6 +60,11 @@ namespace GlassPane.Services
             windows11Manager.AssignWindowToDesktop(desktopNumber);
         }
 
+        public void AssignWindowToDesktop(int desktopNumber, IntPtr windowHandle)
+        {
+            windows11Manager.AssignWindowToDesktop(desktopNumber, windowHandle);
+        }
+
         public void SwitchToDesktop(int desktopNumber)
         {
             windows11Manager.SwitchToDesktop(desktopNumber);
